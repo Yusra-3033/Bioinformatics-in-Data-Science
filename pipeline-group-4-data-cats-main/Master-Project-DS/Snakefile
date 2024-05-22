@@ -1,0 +1,50 @@
+from snakemake.utils import min_version
+
+min_version("6.0")
+
+#report: "report/workflow.rst"
+
+# Load configuration file
+configfile: "config/config.yaml"
+
+include: "workflow/rules/qc.smk"
+include: "workflow/rules/preprocessing.smk"
+include: "workflow/rules/alignment.smk"
+include: "workflow/rules/assembly.smk"
+include: "workflow/rules/scaffolding.smk"
+include: "workflow/rules/assembly_control.smk"
+include: "workflow/rules/lineage_assignment.smk"
+include: "workflow/rules/variant_calling.smk"
+include: "workflow/rules/freebayes_vcf.smk"
+include: "workflow/rules/quast_summary.smk"
+include: "workflow/rules/report_generating.smk"
+
+# Define all rule dependencies
+rule all:
+    input:
+        expand("results/{sample}/reports/multiqc_report.html", sample=config["samples"]),
+#        expand("results/{sample}/summary/quast_summary.txt", sample=config["samples"]),
+        expand("reports/{sample}/multiqc_report.html", sample=config["samples"]),
+        expand("reports/{sample}/quast_report.html", sample=config["samples"])
+    default_target: True
+
+
+
+rule multiqc:
+    input:
+        lineage_assignment ="results/{sample}/lineage_assignment",
+        vcf_report=expand("results/{sample}/vcf/{sample}.vcf", sample=config["samples"]),
+        fastqc_report="results/{sample}/fastqc",
+    output:
+        "results/{sample}/reports/multiqc_report.html"
+    log:
+        "logs/multiqc/{sample}.log"
+    conda:
+        "workflow/envs/multiqc.yaml"
+    shell:
+        """
+        multiqc {input.lineage_assignment}/lineage_report.csv \
+                {input.vcf_report} \
+                {input.fastqc_report}/*.html \
+                -o {output} --force &> {log}
+        """

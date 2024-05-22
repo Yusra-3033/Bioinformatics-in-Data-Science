@@ -1,0 +1,8 @@
+samples:
+  - No-RKI-Ringversuch-417016_S28_L001
+  - No-RKI-Ringversuch-417017_S29_L001
+reads:
+  - _R1_001
+  - _R2_001
+genome_path: "data"
+samples_path: "data/samples"
